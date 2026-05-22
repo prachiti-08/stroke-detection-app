@@ -7,9 +7,6 @@ from train_model import StrokeNet
 import numpy as np
 import cv2
 import pandas as pd
-from pytorch_grad_cam import GradCAMPlusPlus
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
-
 
 # -----------------------------
 # Page Config
@@ -17,19 +14,16 @@ from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 st.set_page_config(page_title="Brain Stroke Detection Dashboard", layout="wide")
 
 # -----------------------------
-# Custom CSS (Apple-style UI)
+# Custom CSS
 # -----------------------------
 st.markdown("""
 <style>
-
-/* Background */
 .stApp {
     background: linear-gradient(135deg, #0f172a, #1e293b);
     color: #e2e8f0;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Card style */
 .card {
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(20px);
@@ -39,19 +33,16 @@ st.markdown("""
     margin-bottom: 20px;
 }
 
-/* Metrics */
 div[data-testid="stMetric"] {
     background: rgba(255,255,255,0.05);
     padding: 15px;
     border-radius: 15px;
 }
 
-/* Sidebar */
 section[data-testid="stSidebar"] {
     background: rgba(15, 23, 42, 0.95);
 }
 
-/* Buttons */
 .stButton button {
     border-radius: 12px;
     background: linear-gradient(135deg, #3b82f6, #6366f1);
@@ -59,11 +50,9 @@ section[data-testid="stSidebar"] {
     border: none;
 }
 
-/* Text */
 h1, h2, h3 {
     font-weight: 600;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -77,54 +66,25 @@ def load_model():
     model = StrokeNet().to(device)
     model.load_state_dict(torch.load("model/best_model.pth", map_location=device))
     model.eval()
+
     return model
 
 model = load_model()
 
-def apply_clahe(pil_img):
-
-    img = np.array(pil_img)
-
-    lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
-
-    l, a, b = cv2.split(lab)
-
-    clahe = cv2.createCLAHE(
-        clipLimit=3.0,
-        tileGridSize=(8,8)
-    )
-
-    cl = clahe.apply(l)
-
-    merged = cv2.merge((cl,a,b))
-
-    enhanced = cv2.cvtColor(merged, cv2.COLOR_LAB2RGB)
-
-    return Image.fromarray(enhanced)
+device = next(model.parameters()).device
 
 # -----------------------------
 # Transform
 # -----------------------------
 transform = transforms.Compose([
-    transforms.Resize((384,384)),
+    transforms.Resize((224,224)),
     transforms.ToTensor(),
     transforms.Normalize([0.5,0.5,0.5],[0.5,0.5,0.5])
 ])
 
-train_transform = transforms.Compose([
-    transforms.Resize((384,384)),
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation(10),
-    transforms.ToTensor(),
-    transforms.Normalize([0.5,0.5,0.5],[0.5,0.5,0.5])
-])
-
-val_transform = transforms.Compose([
-    transforms.Resize((384,384)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.5,0.5,0.5],[0.5,0.5,0.5])
-])
-
+# -----------------------------
+# Classes
+# -----------------------------
 classes = ['haemorrhage', 'ishemia', 'normal']
 display_names = {
     'haemorrhage': 'Hemorrhagic Stroke',
@@ -137,45 +97,68 @@ display_names = {
 # -----------------------------
 def generate_gradcam(model, image_tensor):
 
-    device = next(model.parameters()).device
+    activations = []
+    gradients = []
 
-    target_layers = [
-        model.features[-1],   # layer4
-    ]
+    def forward_hook(module, inp, out):
+        activations.append(out)
 
-    cam = GradCAMPlusPlus(
-        model=model,
-        target_layers=target_layers
-    )
+    def backward_hook(module, grad_in, grad_out):
+        gradients.append(grad_out[0])
+
+    # -----------------------------
+    # AUTO FIND LAST CONV LAYER
+    # -----------------------------
+    target_layer = None
+
+    for module in model.modules():
+        if isinstance(module, torch.nn.Conv2d):
+            target_layer = module
+
+    if target_layer is None:
+        raise ValueError("No Conv2d layer found in model!")
+
+    # attach hooks
+    fh = target_layer.register_forward_hook(forward_hook)
+    bh = target_layer.register_full_backward_hook(backward_hook)
 
     image_tensor = image_tensor.to(device)
 
-    outputs = model(image_tensor)
+    output = model(image_tensor)
+    pred_class = output.argmax(dim=1)
 
-    pred = torch.argmax(outputs, dim=1).item()
+    model.zero_grad()
+    output[0, pred_class].backward()
 
-    targets = [ClassifierOutputTarget(pred)]
+    grads = gradients[0][0]   # (C, H, W)
+    acts = activations[0][0]  # (C, H, W)
 
-    grayscale_cam = cam(
-        input_tensor=image_tensor,
-        targets=targets
-    )
+    # -----------------------------
+    # Grad-CAM computation
+    # -----------------------------
+    weights = torch.mean(grads, dim=(1, 2))  # (C,)
 
-    cam_map = grayscale_cam[0]
+    cam = torch.zeros(acts.shape[1:], device=device)
 
-    # Better smoothing
-    cam_map = cv2.GaussianBlur(cam_map, (11,11), 0)
+    for i, w in enumerate(weights):
+        cam += w * acts[i]
 
-    # Stronger normalization
-    cam_map = (cam_map - cam_map.min()) / (
-        cam_map.max() - cam_map.min() + 1e-8
-    )
+    cam = torch.relu(cam)
 
-    # Sharper localization
-    cam_map[cam_map < 0.35] = 0
+    cam = cam - cam.min()
+    cam = cam / (cam.max() + 1e-8)
 
-    return cam_map
-    
+    cam = cam.detach().cpu().numpy()
+    cam = cv2.resize(cam, (224, 224))
+    cam = cv2.GaussianBlur(cam, (7, 7), 0)
+
+    cam[cam < 0.25] = 0
+
+    fh.remove()
+    bh.remove()
+
+    return cam
+
 # -----------------------------
 # Sidebar
 # -----------------------------
@@ -184,7 +167,7 @@ uploaded_file = st.sidebar.file_uploader("Upload CT Scan", type=["png","jpg","jp
 alpha = st.sidebar.slider("Heatmap Intensity", 0.0, 1.0, 0.5)
 
 # -----------------------------
-# Title Card
+# Header
 # -----------------------------
 st.markdown("""
 <div class="card">
@@ -194,19 +177,18 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# Main Logic
+# Main
 # -----------------------------
 if uploaded_file:
 
     image = Image.open(uploaded_file).convert("RGB")
-
-    image = apply_clahe(image)
     img_tensor = transform(image).unsqueeze(0)
 
     # Prediction
     with torch.no_grad():
         output = model(img_tensor)
         probs = F.softmax(output, dim=1)
+
         confidence, pred = torch.max(probs, 1)
 
     raw_pred = classes[pred.item()]
@@ -220,49 +202,29 @@ if uploaded_file:
 
     orig = np.array(image.resize((224,224)))
 
-    # -----------------------------
-    # ✅ SIMPLE brain mask (correct way)
-    # -----------------------------
-    gray = cv2.cvtColor(orig, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(orig, cv2.COLOR_RGB2GRAY)
 
-    # Keep brain, remove background ONLY
-    _, mask = cv2.threshold(gray, 30, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    _, mask = cv2.threshold(gray, 20, 255, cv2.THRESH_BINARY)
 
     mask = mask / 255.0
     cam = cam * mask
-    kernel = np.array([
-    [-1,-1,-1],
-    [-1, 9,-1],
-    [-1,-1,-1]
-     ])
 
-    cam = cv2.filter2D(cam, -1, kernel)
-
-    # -----------------------------
-    # ✅ LIGHT cleaning (not aggressive)
-    # -----------------------------
     cam = cv2.GaussianBlur(cam, (9,9), 0)
-
-    # Mild threshold (don’t kill signal)
     cam[cam < 0.2] = 0
 
-    # -----------------------------
-    # Heatmap
-    # -----------------------------
     heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
 
-    # Better overlay
-    overlay = cv2.addWeighted(orig, 0.75, heatmap, 0.45, 0)
+    overlay = cv2.addWeighted(orig, 0.7, heatmap, 0.3, 0)
 
     # -----------------------------
-    # Top Section
+    # Layout
     # -----------------------------
     col1, col2 = st.columns(2)
 
     with col1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("CT Scan")
-        st.image(image, width="stretch")
+        st.image(image, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
@@ -273,21 +235,18 @@ if uploaded_file:
         st.metric("Confidence", f"{confidence}%")
 
         if raw_pred != "normal":
-            st.markdown('<p style="color:#f87171;font-weight:600;">⚠️ Model indicates possible abnormality. Consult a medical professional.</p>', unsafe_allow_html=True)
+            st.warning("Possible abnormality detected")
         else:
-            st.markdown('<p style="color:#34d399;font-weight:600;">Scan appears normal</p>', unsafe_allow_html=True)
+            st.success("Normal scan")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # -----------------------------
-    # Bottom Section
-    # -----------------------------
     col3, col4 = st.columns(2)
 
     with col3:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("Grad-CAM Heatmap")
-        st.image(overlay, width="stretch")
+        st.image(overlay, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col4:
@@ -299,11 +258,11 @@ if uploaded_file:
             'Probability': probs.squeeze().tolist()
         })
 
-        st.bar_chart(df.set_index('Class'), height=300)
+        st.bar_chart(df.set_index('Class'))
         st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    st.info("Upload a CT scan from the sidebar to begin")
+    st.info("Upload a CT scan to begin")
 
 # -----------------------------
 # Footer
@@ -311,6 +270,6 @@ else:
 st.markdown("""
 <hr style="border: 0.5px solid #334155;">
 <p style="text-align:center; font-size:12px; color:#94a3b8;">
-©NeuroAi | All rights reserved • For educational use only
+©NeuroAi | Educational Use Only
 </p>
 """, unsafe_allow_html=True)
