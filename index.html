@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Neuro.ai</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="static/style.css">
+</head>
+
+<body>
+
+  <!-- Background -->
+  <div class="background">
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    <div class="grid"></div>
+  </div>
+
+  <!-- Navbar -->
+  <header class="nav">
+
+    <div class="logo">
+      <span class="logo-dot"></span>
+      Neuro.ai
+    </div>
+
+    <nav class="nav-links">
+      <a href="#home" class="active">Home</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#workspace">Workspace</a>
+      <a href="#reports">Reports</a>
+      <a href="#about">About</a>
+      <a href="#team">Team</a>
+    </nav>
+
+
+  </header>
+
+  <!-- Main -->
+  <main id="home">
+
+    <!-- Hero -->
+    <section class="hero section">
+
+      <div class="hero-copy">
+
+        <div class="pill">
+          AI Clinical Intelligence
+        </div>
+
+        <h1>
+          AI Powered Stroke Detection
+        </h1>
+
+        <p>
+          CT-based stroke analysis accelerated by medical-grade AI.
+          Upload scans, generate predictions, and visualize Grad-CAM heatmaps
+          for explainable clinical insights.
+        </p>
+
+        <div class="hero-actions">
+          <button class="btn primary" data-scroll="#workspace">
+            Open Workspace
+          </button>
+
+          <button class="btn ghost" data-scroll="#dashboard">
+            View Dashboard
+          </button>
+        </div>
+
+        <div class="hero-metrics">
+
+          <div class="metric">
+            <span class="metric-label">
+              Average processing time
+            </span>
+
+            <span class="metric-value">
+              12 seconds
+            </span>
+          </div>
+
+          <div class="metric">
+            <span class="metric-label">
+              Deep Learning Model
+            </span>
+
+            <span class="metric-value">
+              ResNet18 + GradCAM
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Hero Visual -->
+      <div class="hero-visual">
+
+        <div class="orb"></div>
+
+        <div class="scan-panel">
+
+          <div class="scan-header">
+            <span>Live CT Analysis</span>
+            <span class="status">Online</span>
+          </div>
+
+          <div class="scan-body">
+            <div class="scan-wave"></div>
+            <div class="scan-wave delay"></div>
+            <div class="scan-wave delay-2"></div>
+          </div>
+
+          <div class="scan-footer">
+            <span>AI Confidence Engine</span>
+            <span>Active</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- WHY PROJECT IS REQUIRED SECTION -->
+<section class="why-project">
+    <div class="container">
+        <h2>Why This Project is Required</h2>
+
+        <p>
+            Stroke is one of the leading causes of death and permanent disability worldwide.
+            Early detection is extremely important because delayed diagnosis can lead to
+            severe brain damage or death.
+        </p>
+
+        <p>
+            Millions of stroke cases go undetected or are diagnosed too late due to
+            shortage of radiologists, manual analysis delays, and lack of advanced
+            healthcare facilities in many areas.
+        </p>
+
+        <!-- Statistics Cards -->
+        <div class="stroke-stats-container">
+
+    <div class="stroke-stat-card">
+        <h3>15 Million+</h3>
+        <p>People suffer from stroke every year</p>
+    </div>
+
+    <div class="stroke-stat-card">
+        <h3>5 Million+</h3>
+        <p>Deaths occur annually due to stroke</p>
+    </div>
+
+    <div class="stroke-stat-card">
+        <h3>5 Million+</h3>
+        <p>People become permanently disabled</p>
+    </div>
+
+    <div class="stroke-stat-card">
+        <h3>1.9 Million</h3>
+        <p>Brain cells lost every minute during stroke</p>
+    </div>
+
+</div>
+        </div>
+
+        <p class="project-goal">
+            This AI-based Stroke Detection System helps doctors by automatically
+            classifying CT scan images into Normal, Ischemic, and Hemorrhagic
+            categories for faster and more accurate diagnosis.
+        </p>
+    </div>
+</section>
+
+    <!-- Features -->
+    <section id="dashboard" class="section features">
+
+      <div class="section-title">
+        <h2>Clinical Workflow Highlights</h2>
+
+        <p>
+          Intelligent tools designed for AI-assisted stroke diagnosis.
+        </p>
+      </div>
+
+      <div class="card-grid">
+
+        <article class="glass-card">
+          <h3>CT Scan Upload</h3>
+
+          <p>
+            Secure image upload with real-time preprocessing and analysis.
+          </p>
+
+          <span class="card-tag">
+            Secure Pipeline
+          </span>
+        </article>
+
+        <article class="glass-card">
+          <h3>AI Detection Engine</h3>
+
+          <p>
+            Detect ischemic and hemorrhagic stroke patterns using deep learning.
+          </p>
+
+          <span class="card-tag">
+            ResNet18 Inference
+          </span>
+        </article>
+
+        <article class="glass-card">
+          <h3>Grad-CAM Visualization</h3>
+
+          <p>
+            Explainable AI heatmaps showing abnormality localization.
+          </p>
+
+          <span class="card-tag">
+            Explainable AI
+          </span>
+        </article>
+
+      </div>
+
+    </section>
+
+    <!-- Embedded Streamlit -->
+    <section id="workspace" class="section upload">
+
+      <div class="section-title">
+        <h2>Stroke Detection Workspace</h2>
+
+        <p>
+          Interactive AI-powered CT scan analysis dashboard.
+        </p>
+      </div>
+
+      <div class="glass-card"
+        style="
+          padding:20px;
+          height:950px;
+          border-radius:24px;
+          overflow:hidden;
+        ">
+
+        <iframe
+    src="http://localhost:8501"
+    width="100%"
+    height="100%"
+    style="
+        border:none;
+        border-radius:20px;
+        background:white;
+    "
+    allowfullscreen>
+</iframe>
+
+      </div>
+
+    </section>
+
+    <!-- Stats -->
+    <section id="reports" class="section stats">
+
+      <div class="section-title">
+        <h2>AI Statistics</h2>
+
+        <p>
+          Performance metrics from trained stroke classification models.
+        </p>
+      </div>
+
+      <div class="card-grid stats-grid">
+
+        <article class="glass-card stat-card">
+          <h3>13,000+</h3>
+          <p>CT Images Trained</p>
+        </article>
+
+        <article class="glass-card stat-card">
+          <h3>85.8%</h3>
+          <p>Model Accuracy</p>
+        </article>
+
+        <article class="glass-card stat-card">
+          <h3>3-Class</h3>
+          <p>Stroke Classification</p>
+        </article>
+
+      </div>
+
+    </section>
+
+    <!-- About -->
+    <section id="about" class="section about">
+
+      <div class="section-title">
+
+        <h2>
+          Clinical Grade Intelligence
+        </h2>
+
+        <p>
+          Built using PyTorch, Streamlit, Grad-CAM visualization,
+          and deep convolutional neural networks for educational
+          and research purposes.
+        </p>
+
+      </div>
+
+      <div class="about-panels">
+
+        <div class="glass-card">
+          <h3>Explainable AI</h3>
+
+          <p>
+            Heatmap visualizations help identify regions influencing predictions.
+          </p>
+        </div>
+
+        <div class="glass-card">
+          <h3>Real-Time Inference</h3>
+
+          <p>
+            Fast CT scan analysis optimized for interactive diagnostic workflows.
+          </p>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Team Section -->
+<section id="team" class="section about">
+
+  <div class="section-title">
+    <h2>Meet The Team</h2>
+
+    <p>
+      This project was designed and developed by a multidisciplinary team
+      focused on AI-driven medical imaging and stroke detection systems.
+    </p>
+  </div>
+
+  <div class="card-grid">
+
+    <!-- Member 1 -->
+    <div class="glass-card">
+      <h3>Prachiti Shivalkar</h3>
+
+      <p>
+        Backend Developer • AI/ML Developer
+      </p>
+
+      <span class="card-tag">
+        Deep Learning • Data Pipeline
+      </span>
+    </div>
+
+    <!-- Member 2 -->
+    <div class="glass-card">
+      <h3>Tirtha Mhabade</h3>
+
+      <p>
+        Frontend Developer • UI/UX Designer
+      </p>
+
+      <span class="card-tag">
+        Web Development
+      </span>
+    </div>
+
+    
+
+    <!-- Member 3 -->
+    <div class="glass-card">
+      <h3>Kajal Koli</h3>
+
+      <p>
+        Documentation • Research Analyst
+      </p>
+
+      <span class="card-tag">
+        Documentation
+      </span>
+    </div>
+
+  </div>
+
+</section>
+
+  <!-- Footer -->
+  <footer class="footer">
+
+    <div>
+      © 2026 Neuro.ai . All rights reserved.
+    </div>
+
+
+  </footer>
+
+  <script src="static/script.js"></script>
+
+</body>
+</html>
