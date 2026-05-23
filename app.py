@@ -7,6 +7,42 @@ from train_model import StrokeNet
 import numpy as np
 import cv2
 import pandas as pd
+from fpdf import FPDF
+from datetime import datetime
+import os
+
+# -----------------------------
+# PDF Report Function
+# -----------------------------
+def generate_pdf_report(predicted_class, confidence):
+
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Arial", "B", 18)
+    pdf.cell(0, 10, "Brain Stroke Detection Report", ln=True, align="C")
+
+    pdf.ln(10)
+
+    pdf.set_font("Arial", "", 12)
+
+    pdf.cell(0, 10, f"Prediction: {predicted_class}", ln=True)
+    pdf.cell(0, 10, f"Confidence: {confidence:.2f}%", ln=True)
+    pdf.cell(0, 10, f"Generated: {datetime.now()}", ln=True)
+
+    pdf.ln(10)
+
+    pdf.multi_cell(
+        0,
+        10,
+        "This AI-generated report is for educational purposes only and should not replace professional medical diagnosis."
+    )
+
+    report_path = "stroke_report.pdf"
+
+    pdf.output(report_path)
+
+    return report_path
 
 # -----------------------------
 # Page Config
@@ -239,8 +275,20 @@ if uploaded_file:
         else:
             st.success("Normal scan")
 
-        st.markdown('</div>', unsafe_allow_html=True)
+        # -----------------------------
+        # PDF Download Button
+        # -----------------------------
+        report_path = generate_pdf_report(prediction, confidence)
 
+        with open(report_path, "rb") as file:
+            st.download_button(
+              label="Download PDF Report",
+              data=file,
+              file_name="stroke_report.pdf",
+              mime="application/pdf"
+            )    
+
+        st.markdown('</div>', unsafe_allow_html=True)
     col3, col4 = st.columns(2)
 
     with col3:

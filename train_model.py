@@ -6,6 +6,12 @@ from torch.utils.data import DataLoader
 from torchvision.models import resnet18, ResNet18_Weights
 import os
 
+
+data_dir = "dataset"
+train_dir = os.path.join(data_dir, "train")
+val_dir = os.path.join(data_dir, "validate")
+test_dir = os.path.join(data_dir, "test")
+
 # -----------------------------
 # Model Definition
 # -----------------------------
