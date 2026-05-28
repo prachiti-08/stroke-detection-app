@@ -2,8 +2,6 @@
 
 AI-powered multiclass brain stroke detection and explainable medical imaging system using Deep Learning, ResNet18, and Grad-CAM visualization.
 
----
-
 # Project Overview
 
 This project is an AI-assisted clinical decision support system developed for automated brain stroke classification using CT/MRI medical images.
@@ -23,8 +21,6 @@ The platform integrates:
 - PDF report generation
 - Medical imaging preprocessing pipeline
 
----
-
 # Key Features
 
 - Multiclass Stroke Classification  
@@ -39,8 +35,6 @@ The platform integrates:
 - Responsive Frontend Design  
 - GPU-supported Training  
 
----
-
 # Problem Statement
 
 Stroke is one of the leading causes of death and long-term disability worldwide. Early detection is critical for effective treatment, but manual interpretation of brain scans is time-consuming and requires expert radiologists.
@@ -54,8 +48,6 @@ Many regions face:
 
 This project aims to develop an AI-powered medical imaging system capable of assisting clinicians through fast, explainable, and accurate stroke classification.
 
----
-
 # Objectives
 
 - Develop an automated AI system for stroke detection
@@ -64,8 +56,6 @@ This project aims to develop an AI-powered medical imaging system capable of ass
 - Provide visual explainability using Grad-CAM
 - Build a deployable healthcare AI platform
 - Create a user-friendly diagnostic dashboard
-
----
 
 # System Architecture
 
@@ -87,17 +77,12 @@ Grad-CAM Heatmap Generation
 Dashboard Visualization
           ↓
 PDF Report Generation
-```
-
----
 
 # Technologies Used
 
 ## Programming Language
 
 - Python
-
----
 
 ## Deep Learning & AI
 
@@ -108,22 +93,16 @@ PDF Report Generation
 - Grad-CAM
 - Explainable AI (XAI)
 
----
-
 ## Image Processing
 
 - OpenCV
 - NumPy
 - PIL (Python Imaging Library)
 
----
-
 ## Data Handling
 
 - Pandas
 - Scikit-learn
-
----
 
 ## Frontend
 
@@ -131,34 +110,24 @@ PDF Report Generation
 - CSS3
 - JavaScript
 
----
-
 ## Backend
 
 - Flask
 - Streamlit
-
----
 
 ## Visualization
 
 - Matplotlib
 - Heatmap Visualization
 
----
-
 ## Report Generation
 
 - FPDF
-
----
 
 ## Development Tools
 
 - VS Code
 - GitHub
-
----
 
 # Deep Learning Model
 
@@ -176,8 +145,6 @@ ResNet18 is a pretrained Convolutional Neural Network architecture used through 
 - Faster training
 - Good accuracy on medical imaging tasks
 
----
-
 ## Transfer Learning
 
 Instead of training from scratch, pretrained ImageNet weights were used to improve:
@@ -185,8 +152,6 @@ Instead of training from scratch, pretrained ImageNet weights were used to impro
 - Accuracy
 - Training speed
 - Generalization capability
-
----
 
 # Explainable AI using Grad-CAM
 
@@ -200,8 +165,6 @@ Grad-CAM helps identify:
 
 This improves trust and interpretability in medical AI systems.
 
----
-
 # Dataset
 
 The model was trained using publicly available medical imaging datasets from Kaggle and healthcare imaging sources.
@@ -211,8 +174,6 @@ The model was trained using publicly available medical imaging datasets from Kag
 - Normal
 - Ischemic Stroke
 - Hemorrhagic Stroke
-
----
 
 # Image Preprocessing
 
@@ -224,8 +185,6 @@ The following preprocessing techniques were applied:
 - Data augmentation
 - Noise reduction
 - Contrast enhancement
-
----
 
 # Model Workflow
 
@@ -256,8 +215,6 @@ Results are displayed through Streamlit and web frontend.
 ## Step 7 — Report Generation
 
 Diagnostic PDF reports are generated automatically.
-
----
 
 # Project Structure
 
@@ -294,17 +251,6 @@ stroke-detection-ai/
 └── streamlit_app.py
 ```
 
----
-
-# Installation
-
-## 1️⃣ Clone Repository
-
-```bash
-git clone https://github.com/yourusername/stroke-detection-ai.git
-cd stroke-detection-ai
-```
-
 # Requirements
 
 ```text
@@ -321,8 +267,6 @@ pillow
 fpdf
 ```
 
----
-
 # Evaluation Metrics
 
 The model performance was evaluated using:
@@ -333,8 +277,6 @@ The model performance was evaluated using:
 - F1 Score
 - Confusion Matrix
 
----
-
 # Applications
 
 - Hospital diagnostic assistance
@@ -342,8 +284,6 @@ The model performance was evaluated using:
 - AI-assisted radiology systems
 - Clinical decision support
 - Medical research
-
----
 
 # Future Scope
 
@@ -356,8 +296,6 @@ The model performance was evaluated using:
 - Federated learning for medical privacy
 - Integration with Electronic Health Records (EHR)
 
----
-
 # Limitations
 
 - Dependent on dataset quality
@@ -365,16 +303,12 @@ The model performance was evaluated using:
 - Not a replacement for radiologists
 - Performance may vary across imaging devices
 
----
-
 # Ethical Considerations
 
 - Patient privacy must be protected
 - AI should assist, not replace clinicians
 - Medical AI requires explainability
 - Bias mitigation is essential in healthcare datasets
-
----
 
 # Sample Outputs
 
@@ -384,8 +318,6 @@ The model performance was evaluated using:
 - Predicted class
 - Confidence score
 - Grad-CAM heatmap
-
----
 
 # Team Members
 
@@ -402,8 +334,6 @@ The model performance was evaluated using:
 Usha Mittal Institute of Technology  
 SNDT Women’s University
 
----
-
 # Research References
 
 - [1] M. Kanchana, R. Shankar, and G. Hariharan, “Brain Stroke Detection using CT Images,” Proc.
@@ -418,13 +348,10 @@ ICACC Tech, IEEE, 2024.
 - [6] A. Fontanella et al., “Deep learning method to identify acute ischemic stroke lesions on CT,”
 arXiv:2309.17320, 2023
 
----
 
 # License
 
 This project is developed for educational and research purposes.
-
----
 
 # Contact
 
@@ -432,7 +359,5 @@ This project is developed for educational and research purposes.
 
 - LinkedIn: https://www.linkedin.com/in/prachiti-shivalkar-ai/
 - GitHub: [https://github.com/](https://github.com/prachiti-08)
-
----
 
 # ⭐ If you found this project useful, give it a star on GitHub!
