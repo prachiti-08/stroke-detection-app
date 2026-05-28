@@ -59,7 +59,6 @@ This project aims to develop an AI-powered medical imaging system capable of ass
 
 # System Architecture
 
-```text
 Medical Image Upload
           ↓
 Image Preprocessing
@@ -252,7 +251,6 @@ stroke-detection-ai/
 ```
 
 # Requirements
-
 ```text
 torch
 torchvision
