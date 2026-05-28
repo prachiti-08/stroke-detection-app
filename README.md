@@ -312,7 +312,7 @@ The model performance was evaluated using:
 
 ## Prediction Dashboard
 
-- Uploaded CT/MRI image
+- Uploaded CT image
 - Predicted class
 - Confidence score
 - Grad-CAM heatmap
