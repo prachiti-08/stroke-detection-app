@@ -63,12 +63,12 @@ body{
     gap:10px;
 }
 
-.logo-dot{
+/* .logo-dot{
     width:10px;
     height:10px;
     border-radius:50%;
     background:#3b82f6;
-}
+} */
 
 .nav-links{
     display:flex;
