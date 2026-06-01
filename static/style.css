@@ -129,31 +129,28 @@ body{
     font-size:14px;
 }
 
-.hero-actions{
+.hero-buttons{
     display:flex;
-    gap:20px;
+    gap:16px;
     margin-top:30px;
+    align-items:center;
+}
+
+.hero-buttons a{
+    text-decoration:none;
 }
 
 .btn{
-    padding:14px 24px;
-    border:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:14px 28px;
     border-radius:14px;
+    font-size:1rem;
+    font-weight:600;
+    text-decoration:none;
     cursor:pointer;
-    font-size:16px;
 }
-
-.primary{
-    background:#3b82f6;
-    color:white;
-}
-
-.ghost{
-    background:transparent;
-    border:1px solid rgba(255,255,255,0.2);
-    color:white;
-}
-
 .hero-metrics{
     display:flex;
     gap:20px;
@@ -381,26 +378,4 @@ iframe{
     100%{
         transform: translateX(20%) rotate(360deg);
     }
-}
-.hero-buttons{
-    display:flex;
-    gap:16px;
-    margin-top:30px;
-    align-items:center;
-}
-
-.hero-buttons a{
-    text-decoration:none;
-}
-
-.btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding:14px 28px;
-    border-radius:14px;
-    font-size:1rem;
-    font-weight:600;
-    text-decoration:none;
-    cursor:pointer;
 }
