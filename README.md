@@ -346,6 +346,11 @@ ICACC Tech, IEEE, 2024.
 - [6] A. Fontanella et al., “Deep learning method to identify acute ischemic stroke lesions on CT,”
 arXiv:2309.17320, 2023
 
+## Live Website:
+https://stroke-detection-app.vercel.app
+
+## Live AI Dashboard:
+https://stroke-detection-app-neuro-ai.streamlit.app
 
 # License
 
