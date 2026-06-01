@@ -100,7 +100,13 @@ def load_model():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = StrokeNet().to(device)
-    model.load_state_dict(torch.load("model/best_model.pth", map_location=device))
+   MODEL_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "model",
+    "best_model.pth"
+)
+
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
     model.eval()
 
     return model
