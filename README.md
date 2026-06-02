@@ -347,7 +347,7 @@ ICACC Tech, IEEE, 2024.
 arXiv:2309.17320, 2023
 
 ## Live Website:
-https://stroke-detection-app.vercel.app
+[https://stroke-detection-app.vercel.app](https://stroke-detection-app-neuro-ai.vercel.app/)
 
 ## Live AI Dashboard:
 https://stroke-detection-app-neuro-ai.streamlit.app
