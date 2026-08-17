@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 from torchvision import transforms
 
-from train_model import StrokeNet
+from model import StrokeNet
 
 import numpy as np
 import cv2
