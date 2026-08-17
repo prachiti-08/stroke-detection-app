@@ -10,7 +10,6 @@ from torchvision import transforms
 from model import StrokeNet
 
 import numpy as np
-import cv2
 import pandas as pd
 
 
