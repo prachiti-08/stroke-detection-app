@@ -1,8 +1,8 @@
-flask
+streamlit
 torch
 torchvision
-opencv-python
 numpy
+opencv-python-headless
 pillow
-matplotlib
+pandas
 scikit-learn
