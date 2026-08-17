@@ -1,9 +1,8 @@
-streamlit
+flask
 torch
 torchvision
-pillow
+opencv-python
 numpy
-opencv-python-headless
-pandas
-fpdf
+pillow
 matplotlib
+scikit-learn
