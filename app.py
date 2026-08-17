@@ -7,9 +7,10 @@ import torch.nn.functional as F
 
 from torchvision import transforms
 
-from model import StrokeNet
+from stroke_model import StrokeNet
 
 import numpy as np
+import cv2
 import pandas as pd
 
 
@@ -19,7 +20,7 @@ import pandas as pd
 
 st.set_page_config(
     page_title="Brain Stroke Detection Dashboard",
-    page_icon="🧠",
+    
     layout="wide"
 )
 
@@ -416,7 +417,7 @@ alpha = st.sidebar.slider(
 st.markdown("""
 <div class="card">
 
-<h1>🧠 Brain Stroke Detection Dashboard</h1>
+<h1> Brain Stroke Detection Dashboard</h1>
 
 <p>
 AI-powered CT scan classification with
