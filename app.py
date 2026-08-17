@@ -3,11 +3,11 @@ import streamlit as st
 from PIL import Image
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
-from torchvision.models import resnet18, ResNet18_Weights
 from torchvision import transforms
+
+from train_model import StrokeNet
 
 import numpy as np
 import cv2
@@ -73,27 +73,13 @@ h1, h2, h3 {
 
 
 # ============================================================
-# CONFIGURATION
+# PATH CONFIGURATION
 # ============================================================
 
 MODEL_PATH = os.path.join(
     "model",
     "best_model.pth"
 )
-
-IMAGE_SIZE = 224
-
-CLASS_NAMES = [
-    "hemorrhagic",
-    "ischemic",
-    "normal"
-]
-
-DISPLAY_NAMES = {
-    "hemorrhagic": "Hemorrhagic Stroke",
-    "ischemic": "Ischemic Stroke",
-    "normal": "Normal"
-}
 
 
 # ============================================================
@@ -106,76 +92,54 @@ device = torch.device(
 
 
 # ============================================================
-# MODEL ARCHITECTURE
-# ============================================================
-
-class StrokeNet(nn.Module):
-
-    def __init__(self):
-
-        super().__init__()
-
-        self.model = resnet18(
-            weights=ResNet18_Weights.DEFAULT
-        )
-
-        # Freeze complete backbone initially
-        for param in self.model.parameters():
-            param.requires_grad = False
-
-        # Fine-tuned layers used during training
-        for param in self.model.layer3.parameters():
-            param.requires_grad = True
-
-        for param in self.model.layer4.parameters():
-            param.requires_grad = True
-
-        # Three classes
-        self.model.fc = nn.Linear(
-            self.model.fc.in_features,
-            3
-        )
-
-    def forward(self, x):
-
-        return self.model(x)
-
-
-# ============================================================
 # LOAD MODEL
 # ============================================================
 
 @st.cache_resource
 def load_model():
 
+    model = StrokeNet().to(device)
+
     if not os.path.exists(MODEL_PATH):
 
-        raise FileNotFoundError(
+        st.error(
             f"Model file not found: {MODEL_PATH}"
         )
 
-    model = StrokeNet().to(device)
+        st.stop()
 
-    # Load checkpoint
+
+    # --------------------------------------------------------
+    # IMPORTANT:
+    # train_model.py saves a CHECKPOINT dictionary:
+    #
+    # {
+    #     "model_state_dict": ...,
+    #     "optimizer_state_dict": ...,
+    #     "epoch": ...,
+    #     "val_f1": ...,
+    #     ...
+    # }
+    #
+    # Therefore we must extract model_state_dict.
+    # --------------------------------------------------------
+
     checkpoint = torch.load(
         MODEL_PATH,
-        map_location=device,
-        weights_only=False
+        map_location=device
     )
 
-    # --------------------------------------------------------
-    # Your training code saves a dictionary containing
-    # "model_state_dict".
-    # --------------------------------------------------------
 
+    # New checkpoint format
     if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
 
         state_dict = checkpoint["model_state_dict"]
 
+    # Fallback in case a raw state_dict is uploaded
     else:
 
-        # Fallback in case a raw state_dict is uploaded
         state_dict = checkpoint
+
 
     model.load_state_dict(
         state_dict,
@@ -187,38 +151,19 @@ def load_model():
     return model
 
 
-# ============================================================
-# LOAD MODEL
-# ============================================================
-
-try:
-
-    model = load_model()
-
-except Exception as e:
-
-    st.error("❌ Failed to load the trained model.")
-
-    st.code(
-        str(e)
-    )
-
-    st.stop()
+model = load_model()
 
 
 # ============================================================
-# IMAGE TRANSFORM
+# IMAGE TRANSFORMATION
 # ============================================================
 
-# IMPORTANT:
-# These are the same ImageNet normalization values used
-# during training in train_model.py.
+# EXACT normalization used during training.
+# Your train_model.py uses ImageNet statistics.
 
 transform = transforms.Compose([
 
-    transforms.Resize(
-        (IMAGE_SIZE, IMAGE_SIZE)
-    ),
+    transforms.Resize((224, 224)),
 
     transforms.ToTensor(),
 
@@ -230,14 +175,40 @@ transform = transforms.Compose([
 
 
 # ============================================================
+# CLASS DEFINITIONS
+# ============================================================
+
+# EXACT order produced by ImageFolder:
+#
+# hemorrhagic -> 0
+# ischemic    -> 1
+# normal      -> 2
+
+classes = [
+    "hemorrhagic",
+    "ischemic",
+    "normal"
+]
+
+
+display_names = {
+
+    "hemorrhagic":
+        "Hemorrhagic Stroke",
+
+    "ischemic":
+        "Ischemic Stroke",
+
+    "normal":
+        "Normal"
+}
+
+
+# ============================================================
 # GRAD-CAM
 # ============================================================
 
-def generate_gradcam(
-    model,
-    image_tensor,
-    target_class=None
-):
+def generate_gradcam(model, image_tensor):
 
     model.eval()
 
@@ -245,14 +216,20 @@ def generate_gradcam(
         model.parameters()
     ).device
 
-    image_tensor = image_tensor.to(device)
 
-    # Store activations and gradients
-    activations = []
     gradients = []
+    activations = []
+
 
     # --------------------------------------------------------
-    # Hooks
+    # Target layer
+    # --------------------------------------------------------
+
+    target_layer = model.model.layer4[-1]
+
+
+    # --------------------------------------------------------
+    # Forward hook
     # --------------------------------------------------------
 
     def forward_hook(
@@ -265,6 +242,11 @@ def generate_gradcam(
             output.detach()
         )
 
+
+    # --------------------------------------------------------
+    # Backward hook
+    # --------------------------------------------------------
+
     def backward_hook(
         module,
         grad_input,
@@ -275,8 +257,6 @@ def generate_gradcam(
             grad_output[0].detach()
         )
 
-    # Use final ResNet convolutional block
-    target_layer = model.model.layer4[-1]
 
     forward_handle = target_layer.register_forward_hook(
         forward_hook
@@ -286,6 +266,16 @@ def generate_gradcam(
         backward_hook
     )
 
+
+    # --------------------------------------------------------
+    # Prepare image
+    # --------------------------------------------------------
+
+    image_tensor = image_tensor.to(device)
+
+    image_tensor.requires_grad_(True)
+
+
     # --------------------------------------------------------
     # Forward pass
     # --------------------------------------------------------
@@ -294,12 +284,12 @@ def generate_gradcam(
         image_tensor
     )
 
-    if target_class is None:
 
-        target_class = torch.argmax(
-            output,
-            dim=1
-        ).item()
+    pred = torch.argmax(
+        output,
+        dim=1
+    ).item()
+
 
     # --------------------------------------------------------
     # Backward pass
@@ -307,40 +297,49 @@ def generate_gradcam(
 
     model.zero_grad()
 
-    score = output[
-        0,
-        target_class
-    ]
+    output[0, pred].backward()
 
-    score.backward()
 
     # --------------------------------------------------------
-    # Get gradients + activations
+    # Get gradients and activations
     # --------------------------------------------------------
 
     grads = gradients[0][0]
 
     acts = activations[0][0]
 
+
+    # --------------------------------------------------------
     # Global average pooling of gradients
+    # --------------------------------------------------------
+
     weights = torch.mean(
         grads,
         dim=(1, 2)
     )
 
-    # Weighted combination
+
+    # --------------------------------------------------------
+    # Generate CAM
+    # --------------------------------------------------------
+
     cam = torch.zeros(
         acts.shape[1:],
         dtype=torch.float32,
         device=device
     )
 
+
     for i, weight in enumerate(weights):
 
-        cam += weight * acts[i]
+        cam += (
+            weight * acts[i]
+        )
+
 
     # ReLU
     cam = torch.relu(cam)
+
 
     # Normalize
     cam_min = cam.min()
@@ -352,14 +351,17 @@ def generate_gradcam(
         cam_max - cam_min + 1e-8
     )
 
-    # Convert to NumPy
+
+    # Move to CPU
     cam = cam.detach().cpu().numpy()
 
-    # Resize to image size
+
+    # Resize
     cam = cv2.resize(
         cam,
-        (IMAGE_SIZE, IMAGE_SIZE)
+        (224, 224)
     )
+
 
     # Smooth
     cam = cv2.GaussianBlur(
@@ -368,12 +370,15 @@ def generate_gradcam(
         0
     )
 
+
     # Mild threshold
-    cam[cam < 0.20] = 0
+    cam[cam < 0.25] = 0
+
 
     # Remove hooks
     forward_handle.remove()
     backward_handle.remove()
+
 
     return cam
 
@@ -382,7 +387,10 @@ def generate_gradcam(
 # SIDEBAR
 # ============================================================
 
-st.sidebar.title("⚙️ Controls")
+st.sidebar.title(
+    "⚙️ Controls"
+)
+
 
 uploaded_file = st.sidebar.file_uploader(
     "Upload CT Scan",
@@ -393,12 +401,12 @@ uploaded_file = st.sidebar.file_uploader(
     ]
 )
 
+
 alpha = st.sidebar.slider(
     "Heatmap Intensity",
-    min_value=0.0,
-    max_value=1.0,
-    value=0.5,
-    step=0.05
+    0.0,
+    1.0,
+    0.5
 )
 
 
@@ -409,15 +417,40 @@ alpha = st.sidebar.slider(
 st.markdown("""
 <div class="card">
 
-<h1>🧠 Stroke Detection Dashboard</h1>
+<h1>🧠 Brain Stroke Detection Dashboard</h1>
 
 <p>
-AI-powered brain CT scan analysis using
-Deep Learning and Explainable AI
+AI-powered CT scan classification with
+explainable Grad-CAM visualization
 </p>
 
 </div>
 """, unsafe_allow_html=True)
+
+
+# ============================================================
+# MODEL INFORMATION
+# ============================================================
+
+with st.sidebar:
+
+    st.markdown("---")
+
+    st.write(
+        "**Model:** ResNet18"
+    )
+
+    st.write(
+        "**Classes:** 3"
+    )
+
+    st.write(
+        "**Input:** 224 × 224"
+    )
+
+    st.write(
+        "**Device:** " + str(device)
+    )
 
 
 # ============================================================
@@ -436,7 +469,7 @@ if uploaded_file:
 
 
     # --------------------------------------------------------
-    # CREATE TENSOR
+    # TRANSFORM
     # --------------------------------------------------------
 
     img_tensor = transform(
@@ -450,36 +483,38 @@ if uploaded_file:
 
     with torch.no_grad():
 
-        img_tensor_device = img_tensor.to(
-            device
-        )
-
         output = model(
-            img_tensor_device
+            img_tensor.to(device)
         )
 
-        probabilities = F.softmax(
+        probs = F.softmax(
             output,
             dim=1
         )
 
-        confidence, prediction_index = torch.max(
-            probabilities,
+        confidence, pred = torch.max(
+            probs,
             dim=1
         )
 
 
-    predicted_index = prediction_index.item()
+    # --------------------------------------------------------
+    # GET CLASS
+    # --------------------------------------------------------
 
-    raw_prediction = CLASS_NAMES[
+    predicted_index = pred.item()
+
+    raw_pred = classes[
         predicted_index
     ]
 
-    prediction = DISPLAY_NAMES[
-        raw_prediction
+
+    prediction = display_names[
+        raw_pred
     ]
 
-    confidence_percentage = (
+
+    confidence_value = (
         confidence.item() * 100
     )
 
@@ -490,8 +525,7 @@ if uploaded_file:
 
     cam = generate_gradcam(
         model,
-        img_tensor,
-        target_class=predicted_index
+        img_tensor
     )
 
 
@@ -501,7 +535,7 @@ if uploaded_file:
 
     orig = np.array(
         image.resize(
-            (IMAGE_SIZE, IMAGE_SIZE)
+            (224, 224)
         )
     )
 
@@ -515,6 +549,7 @@ if uploaded_file:
         cv2.COLOR_RGB2GRAY
     )
 
+
     _, mask = cv2.threshold(
         gray,
         20,
@@ -522,15 +557,15 @@ if uploaded_file:
         cv2.THRESH_BINARY
     )
 
-    mask = mask.astype(
-        np.float32
-    ) / 255.0
+
+    mask = mask / 255.0
+
 
     cam = cam * mask
 
 
     # --------------------------------------------------------
-    # LIGHT CLEANING
+    # CLEAN CAM
     # --------------------------------------------------------
 
     cam = cv2.GaussianBlur(
@@ -538,6 +573,7 @@ if uploaded_file:
         (9, 9),
         0
     )
+
 
     cam[cam < 0.20] = 0
 
@@ -547,12 +583,15 @@ if uploaded_file:
     # --------------------------------------------------------
 
     heatmap = cv2.applyColorMap(
-        np.uint8(255 * cam),
+        np.uint8(
+            255 * cam
+        ),
         cv2.COLORMAP_JET
     )
 
+
     # OpenCV produces BGR.
-    # Convert to RGB before displaying in Streamlit.
+    # Convert to RGB for Streamlit.
 
     heatmap = cv2.cvtColor(
         heatmap,
@@ -583,7 +622,7 @@ if uploaded_file:
 
 
     # --------------------------------------------------------
-    # CT SCAN
+    # CT IMAGE
     # --------------------------------------------------------
 
     with col1:
@@ -594,7 +633,7 @@ if uploaded_file:
         )
 
         st.subheader(
-            "🩻 CT Scan"
+            "CT Scan"
         )
 
         st.image(
@@ -620,31 +659,33 @@ if uploaded_file:
         )
 
         st.subheader(
-            "🔬 Diagnosis"
+            "Diagnosis"
         )
+
 
         st.metric(
             "Prediction",
             prediction
         )
 
+
         st.metric(
             "Confidence",
-            f"{confidence_percentage:.2f}%"
+            f"{confidence_value:.2f}%"
         )
 
 
-        if raw_prediction != "normal":
+        if raw_pred != "normal":
 
             st.markdown(
                 """
                 <p style="
                     color:#f87171;
                     font-weight:600;
-                    font-size:16px;
                 ">
-                ⚠️ Model indicates a possible abnormality.
-                Please consult a qualified medical professional.
+                ⚠️ Model indicates a possible
+                abnormality. Please consult a
+                qualified medical professional.
                 </p>
                 """,
                 unsafe_allow_html=True
@@ -657,9 +698,8 @@ if uploaded_file:
                 <p style="
                     color:#34d399;
                     font-weight:600;
-                    font-size:16px;
                 ">
-                ✓ No stroke-related abnormality detected by the model.
+                ✓ Scan appears normal
                 </p>
                 """,
                 unsafe_allow_html=True
@@ -693,17 +733,12 @@ if uploaded_file:
         )
 
         st.subheader(
-            "🔥 Grad-CAM Heatmap"
+            "Grad-CAM Heatmap"
         )
 
         st.image(
             overlay,
             width="stretch"
-        )
-
-        st.caption(
-            "Highlighted regions represent areas that "
-            "contributed to the model's prediction."
         )
 
         st.markdown(
@@ -724,18 +759,19 @@ if uploaded_file:
         )
 
         st.subheader(
-            "📊 Probability Distribution"
+            "Probability Distribution"
         )
 
+
         probability_values = (
-            probabilities[0]
+            probs.squeeze()
             .detach()
             .cpu()
             .numpy()
         )
 
 
-        probability_df = pd.DataFrame({
+        df = pd.DataFrame({
 
             "Class": [
                 "Hemorrhagic",
@@ -743,20 +779,15 @@ if uploaded_file:
                 "Normal"
             ],
 
-            "Probability": (
-                probability_values * 100
-            )
+            "Probability": probability_values
 
         })
 
 
-        probability_df = probability_df.set_index(
-            "Class"
-        )
-
-
         st.bar_chart(
-            probability_df,
+            df.set_index(
+                "Class"
+            ),
             height=300
         )
 
@@ -768,7 +799,7 @@ if uploaded_file:
 
 
     # ========================================================
-    # MODEL INFORMATION
+    # DETAILED PROBABILITIES
     # ========================================================
 
     st.markdown(
@@ -777,42 +808,23 @@ if uploaded_file:
     )
 
     st.subheader(
-        "📋 Model Information"
+        "Class Probabilities"
     )
 
-    info_col1, info_col2, info_col3, info_col4 = st.columns(4)
+
+    probability_cols = st.columns(
+        3
+    )
 
 
-    with info_col1:
+    for i, class_name in enumerate(classes):
 
-        st.metric(
-            "Architecture",
-            "ResNet18"
-        )
+        with probability_cols[i]:
 
-
-    with info_col2:
-
-        st.metric(
-            "Classes",
-            "3"
-        )
-
-
-    with info_col3:
-
-        st.metric(
-            "Input Size",
-            "224 × 224"
-        )
-
-
-    with info_col4:
-
-        st.metric(
-            "Device",
-            str(device).upper()
-        )
+            st.metric(
+                display_names[class_name],
+                f"{probability_values[i] * 100:.2f}%"
+            )
 
 
     st.markdown(
@@ -823,8 +835,12 @@ if uploaded_file:
 
 else:
 
+    # ========================================================
+    # NO IMAGE
+    # ========================================================
+
     st.info(
-        "👈 Upload a CT scan from the sidebar to begin analysis."
+        "Upload a CT scan from the sidebar to begin."
     )
 
 
@@ -841,7 +857,7 @@ st.markdown("""
     color:#94a3b8;
 ">
 
-© NeuroAI | All rights reserved •
+© NeuroAi | All rights reserved •
 For educational and research purposes only
 
 </p>
