@@ -221,3 +221,6 @@ dataset/
 test_images/
 static/uploads/
 *.pdf
+
+# Node.js dependencies
+node_modules/

@@ -1,0 +1,23 @@
+{
+  "name": "primary",
+  "version": "1.0.0",
+  "description": "AI-powered multiclass brain stroke detection and explainable medical imaging system using Deep Learning, ResNet18, and Grad-CAM visualization.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prachiti-08/stroke-detection-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/prachiti-08/stroke-detection-app/issues"
+  },
+  "homepage": "https://github.com/prachiti-08/stroke-detection-app#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
